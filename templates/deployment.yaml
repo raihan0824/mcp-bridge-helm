@@ -24,15 +24,61 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 9090
+              containerPort: {{ .Values.config.network.port }}
               protocol: TCP
+          # Environment variables
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
           volumeMounts:
+            # Config file mount
+            {{- if .Values.volumeMounts.config.enabled }}
             - name: config-volume
-              mountPath: /mcp_bridge/config.json
-              subPath: config.json
+              mountPath: {{ .Values.volumeMounts.config.mountPath }}
+              subPath: {{ .Values.volumeMounts.config.subPath }}
+            {{- end }}
+            # Persistent storage mount
+            {{- if .Values.persistence.enabled }}
+            - name: persistent-storage
+              mountPath: /mcp_bridge/data
+            {{- end }}
+            # Demo server mount (using ConfigMap for simplicity)
+            {{- if .Values.volumeMounts.demoServer.enabled }}
+            - name: demo-server-volume
+              mountPath: {{ .Values.volumeMounts.demoServer.mountPath }}
+              subPath: demo_server.py
+            {{- end }}
+            # Kubeconfig mount (using Secret for security)
+            {{- if .Values.volumeMounts.kubeconfig.enabled }}
+            - name: kubeconfig-volume
+              mountPath: {{ .Values.volumeMounts.kubeconfig.mountPath }}
+              subPath: config
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
+        # Config volume
         - name: config-volume
           configMap:
             name: {{ include "mcp-bridge.fullname" . }}-config
+        # Persistent storage
+        {{- if .Values.persistence.enabled }}
+        - name: persistent-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-pvc" (include "mcp-bridge.fullname" .)) }}
+        {{- end }}
+        # Demo server volume (you'll need to create a ConfigMap for this)
+        {{- if .Values.volumeMounts.demoServer.enabled }}
+        - name: demo-server-volume
+          configMap:
+            name: {{ include "mcp-bridge.fullname" . }}-demo-server
+            defaultMode: 0755
+        {{- end }}
+        # Kubeconfig volume (you'll need to create a Secret for this)
+        {{- if .Values.volumeMounts.kubeconfig.enabled }}
+        - name: kubeconfig-volume
+          secret:
+            secretName: {{ .Values.volumeMounts.kubeconfig.secretName | default (printf "%s-kubeconfig" (include "mcp-bridge.fullname" .)) }}
+        {{- end }}

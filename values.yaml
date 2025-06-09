@@ -1,25 +1,67 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/secretiveshell/mcp-bridge/mcp-bridge
+  repository: dekaregistry.cloudeka.id/cloudeka-system/mcp_bridge
   pullPolicy: Always
-  tag: 0.1.0
+  tag: v0.0.2
 
 service:
-  type: ClusterIP
-  port: 9090
+  type: LoadBalancer  
+  port: 8000
+
+# Environment variables configuration
+env:
+  MCP_BRIDGE__CONFIG__FILE: "/mcp_bridge/config.json"
+  # Uncomment and modify as needed:
+  # MCP_BRIDGE__CONFIG__HTTP_URL: "http://10.88.100.170:8888/config.json"
+  # MCP_BRIDGE__CONFIG__JSON: ""
+
+# Persistent Volume Claim configuration
+persistence:
+  enabled: true
+  storageClass: ""  # Use default storage class
+  accessMode: ReadWriteMany
+  size: 1Gi
+  # Existing claim name if you want to use an existing PVC
+  existingClaim: ""
+
+# Volume mounts configuration
+volumeMounts:
+  # Config mount
+  config:
+    enabled: true
+    mountPath: "/mcp_bridge/config.json"
+    subPath: "config.json"
+  # Demo server mount
+  demoServer:
+    enabled: false
+    mountPath: "/mcp_bridge/demo_server.py"
+  # Kubeconfig mount (secret created manually)
+  kubeconfig:
+    enabled: true
+    mountPath: "/root/.kube/config"
+    # Secret will be created manually using kubectl
+    secretName: "mcp-bridge-kubeconfig"
+
+# Kubeconfig secret creation disabled - create manually with kubectl
 
 config:
   inferenceServer:
-    baseUrl: "http://10.250.94.247/v1"
-    apiKey: "sk-eKdioIHXnRkJ5PJi6ha-jA"
+    baseUrl: "http://103.125.100.52/v1"
+    apiKey: "sk-3yHf9TXqZP7wUB6eL1nKrAi8M0gRqJVEyzYpUGABc9r0dM2V"
   mcpServers:
     fetch:
       command: "uvx"
       args: ["mcp-server-fetch"]
+    kubernetes:
+      command: "npx"
+      args: ["@raihan0824/mcp-server-kubernetes"]
+      env:
+        - name: ALLOW_ONLY_NON_DESTRUCTIVE_TOOLS
+          value: "true"
   network:
     host: "0.0.0.0"
-    port: 9090
+    port: 8000
   logging:
     logLevel: "DEBUG"
 

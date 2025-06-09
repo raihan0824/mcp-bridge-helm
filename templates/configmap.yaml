@@ -9,7 +9,24 @@ data:
         "base_url": {{ .Values.config.inferenceServer.baseUrl | quote }},
         "api_key": {{ .Values.config.inferenceServer.apiKey | quote }}
       },
-      "mcp_servers": {{ .Values.config.mcpServers | toJson }},
+      "mcp_servers": {
+        {{- $servers := .Values.config.mcpServers }}
+        {{- $serverNames := keys $servers | sortAlpha }}
+        {{- range $i, $serverName := $serverNames }}
+        {{- $server := index $servers $serverName }}
+        "{{ $serverName }}": {
+          "command": {{ $server.command | quote }},
+          "args": {{ $server.args | toJson }}
+          {{- if $server.env }},
+          "env": {
+            {{- range $j, $envVar := $server.env }}
+            {{ $envVar.name | quote }}: {{ $envVar.value | quote }}{{ if ne $j (sub (len $server.env) 1) }},{{ end }}
+            {{- end }}
+          }
+          {{- end }}
+        }{{ if ne $i (sub (len $serverNames) 1) }},{{ end }}
+        {{- end }}
+      },
       "network": {
         "host": {{ .Values.config.network.host | default "0.0.0.0" | quote }},
         "port": {{ .Values.config.network.port | default 9090 }}
