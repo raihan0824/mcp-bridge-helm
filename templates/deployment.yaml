@@ -20,6 +20,8 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
+          nodeSelector:
+            node-role.kubernetes.io/egx: true
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:

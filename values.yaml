@@ -3,18 +3,15 @@ replicaCount: 1
 image:
   repository: dekaregistry.cloudeka.id/cloudeka-system/mcp_bridge
   pullPolicy: Always
-  tag: v0.0.2
+  tag: v0.0.3
 
 service:
-  type: LoadBalancer  
+  type: ClusterIP  
   port: 8000
 
 # Environment variables configuration
 env:
   MCP_BRIDGE__CONFIG__FILE: "/mcp_bridge/config.json"
-  # Uncomment and modify as needed:
-  # MCP_BRIDGE__CONFIG__HTTP_URL: "http://10.88.100.170:8888/config.json"
-  # MCP_BRIDGE__CONFIG__JSON: ""
 
 # Persistent Volume Claim configuration
 persistence:
@@ -50,15 +47,23 @@ config:
     baseUrl: "http://103.125.100.52/v1"
     apiKey: "sk-3yHf9TXqZP7wUB6eL1nKrAi8M0gRqJVEyzYpUGABc9r0dM2V"
   mcpServers:
-    fetch:
-      command: "uvx"
-      args: ["mcp-server-fetch"]
-    kubernetes:
-      command: "npx"
-      args: ["@raihan0824/mcp-server-kubernetes"]
-      env:
-        - name: ALLOW_ONLY_NON_DESTRUCTIVE_TOOLS
-          value: "true"
+    # postgres:
+    #   command: "uv"
+    #   args: [
+    #     "run",
+    #     "postgres-mcp",
+    #     "--access-mode=restricted"
+    #   ]
+    #   env:
+    #     - name: DATABASE_URI
+    #       value: "postgresql://postgres:password@10.250.106.47:5432/responal"
+      
+      kubernetes:
+        command: "npx"
+        args: ["@raihan0824/mcp-server-kubernetes"]
+        env:
+          - name: ALLOW_ONLY_NON_DESTRUCTIVE_TOOLS
+            value: "true"
   network:
     host: "0.0.0.0"
     port: 8000
