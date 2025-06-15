@@ -57,8 +57,6 @@ spec:
             - name: kubeconfig-volume
               mountPath: {{ .Values.volumeMounts.kubeconfig.mountPath }}
               subPath: config
-            - name: persistent-storage
-              mountPath: /root/.kube
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
